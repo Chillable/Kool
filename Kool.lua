@@ -15,7 +15,7 @@ local started = false
 local clientStarted = false
 
 --//Types
-type Service = {
+export type Service = {
 
 	Name: string,
 	Client: {},
@@ -23,13 +23,13 @@ type Service = {
 
 }
 
-type Controller = {
+export type Controller = {
 
 	Name: string,
 	[any]: any
 }
 
-type Storage = {
+export type Storage = {
 
 	Name: string,
 	Protected: boolean,
