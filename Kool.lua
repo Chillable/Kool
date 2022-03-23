@@ -1,24 +1,36 @@
+--[[
+
+Kool, a cool game framework
+
+Author: xFly_Flame1014
+Date: 23/3/2022
+
+Version 1.1
+
+Github: https://github.com/Chillable/Kool
+
+]]
+
 --//Services
 local RunService = game:GetService("RunService")
 
 --//Containers
-local Storages = {}
-local StorageData = {}
-
 local Services = {}
 local Controllers = {}
+
+--//Modules
+local KoolStorage = require(script.Modules.KoolStorage)
 
 --//Variables
 local OutputFormat = "[Kool]: %s"
 
-local started = false
+local serverStarted = false
 local clientStarted = false
 
 --//Types
 export type Service = {
 
 	Name: string,
-	Client: {},
 	[any]: any
 
 }
@@ -40,96 +52,6 @@ export type Storage = {
 }
 
 --//Main
-local StorageClass do
-
-	StorageClass = {}
-
-	StorageClass.__index = StorageClass
-
-	function StorageClass:AddItem(key: string | number, item: any)
-
-		assert(typeof(key) == "string" or typeof(key) == "number", OutputFormat:format("Argument #1 must be a string or number"))
-		assert(item, OutputFormat:format("Argument #2 must be a value"))
-
-		local Storage = Storages[self.Name]
-
-		RunService.Heartbeat:Wait()
-
-		if self.Protected and RunService:IsServer() then
-
-			Storage[key] = item
-
-		elseif RunService:IsClient() and not self.Protected then
-
-			Storage[key] = item
-
-		elseif self.Protected and RunService:IsClient() then
-
-			warn(OutputFormat:format(self.Name.." is protected, Client cannot edit or view it"))
-
-		end
-
-	end
-
-	function StorageClass:GetItem(key: string | number)
-
-		assert(typeof(key) == "string" or typeof(key) == "number", OutputFormat:format("Argument #1 must be a string or number"))
-
-		local Storage = Storages[self.Name]
-		local Item = Storage[key]
-
-		RunService.Heartbeat:Wait()
-
-		if self.Protected and RunService:IsServer() then
-
-			return Item
-
-		elseif RunService:IsClient() and not self.Protected then
-
-			return Item
-
-		elseif self.Protected and RunService:IsClient() then
-
-			warn(OutputFormat:format(self.Name.." is protected, Client cannot edit or view it"))
-
-		end
-
-	end
-
-	function StorageClass:RemoveItem(key: string | number)
-
-		assert(typeof(key) == "string" or typeof(key) == "number", OutputFormat:format("Argument #1 must be a string or number"))
-
-		local Storage = Storages[self.Name]
-		local Item = Storage[key]
-
-		RunService.Heartbeat:Wait()
-
-		if key then
-
-			if self.Protected and RunService:IsServer() then
-
-				Storage[key] = nil
-
-			elseif RunService:IsClient() and not self.Protected then
-
-				Storage[key] = nil
-
-			elseif self.Protected and RunService:IsClient() then
-
-				warn(OutputFormat:format(self.Name.." is protected, Client cannot edit or view it"))
-
-			end
-
-		else
-
-			warn(OutputFormat:format(key.." does not exist"))
-
-		end	
-
-	end
-
-end
 
 --//Server
 local KoolServer do 
@@ -138,7 +60,7 @@ local KoolServer do
 
 	function KoolServer:Start()
 
-		if started then
+		if serverStarted then
 
 			warn(OutputFormat:format("Kool has already started"))
 
@@ -146,7 +68,7 @@ local KoolServer do
 
 		else
 
-			started = true
+			serverStarted = true
 
 			--Setup Services
 			for i, service in pairs(Services) do
@@ -223,7 +145,7 @@ local KoolServer do
 
 		RunService.Heartbeat:Wait()
 
-		if started then
+		if serverStarted then
 
 			if not service then 
 
@@ -260,59 +182,11 @@ local KoolServer do
 		end
 
 	end
-
-	function KoolServer:CreateStorage(storageData: Storage): Storage
-
-		assert(typeof(storageData) == "table", OutputFormat:format("Argument #1 must be a table"))
-		assert(typeof(storageData.Name) == "string", OutputFormat:format("Storage's Name must be a string"))
-		assert(Storages[storageData.Name], OutputFormat:format(storageData.Name.." already existed"))
-
-		Storages[storageData.Name] = {}
-		StorageData[storageData.Name] = storageData
-
-		RunService.Heartbeat:Wait()
-
-		return setmetatable(storageData, StorageClass)
-
-	end
-
-	function KoolServer:RemoveStorage(name: string)
-
-		assert(typeof(name) == "string", OutputFormat:format("Argument #1 must be a string"))
-
-		local Storage = Storages[name]
-
-		if StorageData[name] then
-
-			StorageData[name] = nil
-			Storages[name] = nil
-
-		else
-
-			warn(OutputFormat:format(name.." does not exist"))
-
-		end
-
-	end
-
-	function KoolServer:GetStorage(name: string)
-
-		assert(typeof(name) == "string" or typeof(name) == "number", OutputFormat:format("Argument #1 must be a string or number"))
-
-		local Storage = StorageData[name]
-
-		if Storage then
-
-			return setmetatable(Storage, StorageClass)
-
-		else
-
-			warn(OutputFormat:format(name.." does not exist"))
-
-		end
-
-	end
-
+	
+	KoolServer.CreateStorage = KoolStorage.CreateStorage
+	KoolServer.GetStorage = KoolStorage.GetStorage
+	KoolServer.RemoveStorage = KoolStorage.RemoveStorage
+	
 end
 
 --//Client
@@ -405,7 +279,7 @@ local KoolClient do
 
 		RunService.Heartbeat:Wait()
 
-		if started then
+		if serverStarted then
 
 			if controller then 
 
@@ -425,7 +299,7 @@ local KoolClient do
 
 	end
 
-	function KoolClient:RemoveService(name:  string)
+	function KoolClient:RemoveController(name:  string)
 
 		assert(typeof(name) == "string", OutputFormat:format("Argument #1 must be a string"))
 
@@ -442,35 +316,10 @@ local KoolClient do
 		end
 
 	end
-
-	function KoolClient:GetStorage(name: string)
-
-		assert(typeof(name) == "string" or typeof(name) == "number", OutputFormat:format("Argument #1 must be a string or number"))
-
-		local Storage = StorageData[name]
-
-		if Storage then
-
-			if Storage.Protected then
-
-				warn(OutputFormat:format(name.." is protected, Client cannot edit or view it"))
-
-			else
-
-				return setmetatable(Storage, StorageClass)
-
-			end
-
-		else
-
-			warn(OutputFormat:format(name.." does not exist"))
-
-		end
-
-	end
-
+	
+	KoolClient.GetStorage = KoolStorage.GetStorage
+	
 end
-
 
 if RunService:IsServer() then
 
@@ -483,3 +332,4 @@ if RunService:IsClient() then
 	return KoolClient
 
 end
+
