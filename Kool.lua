@@ -44,16 +44,6 @@ export type Controller = {
 	[any]: any
 }
 
-export type Storage = {
-
-	Name: string,
-	Protected: boolean,
-	AddItem: (key: string | number, item: any) -> nil,
-	GetItem: (key: string | number) -> any,
-	RemoveItem: (key: string | number)
-
-}
-
 export type Module = {
 
 	Name: string,
