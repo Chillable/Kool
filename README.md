@@ -1,2 +1,2 @@
 # Kool
-Kool, a cool game framework.
+Kool, a cool game framework. This framework provides simplified Server-Client Communication and organize Modules for Server & Client, later both will be referred as Service and Controller respectively. Just like Knit, it also provides developer freedom to write bootstrap code. The functionalities of Services and Controller are extensible. This my personal game framework so the API is similar to Knit.
